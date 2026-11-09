@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sharp Interactive | Enlaces</title>
+  <meta name="description" content="Semillero IDED de la UPB. Creamos videojuegos y productos audiovisuales: entre amigos, pero en serio.">
+  <meta name="theme-color" content="#051a1e">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <!-- Si la página cambia de dirección, actualiza estas dos URL -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Sharp Interactive">
+  <meta property="og:description" content="Semillero IDED de la UPB. Pre-inscripciones abiertas.">
+  <meta property="og:url" content="https://organicbrownkid.github.io/sharp-interactive/">
+  <meta property="og:image" content="https://organicbrownkid.github.io/sharp-interactive/og-image.png">
+  <meta property="og:locale" content="es_CO">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Saira reemplaza a TT Mussels (la fuente de textos de la marca, que no está en Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/logo-sharp.webp" type="image/webp">
+
+  <style>
+    /* Colores oficiales de Sharp */
+    :root {
+      --fondo: #051a1e;
+      --gris: #242f2d;
+      --verde-oscuro: #253e2d;
+      --verde: #79d056;
+      --amarillo: #fcfe60;
+      --blanco: #ffffff;
+
+      --corte: 12px;   /* esquinas cortadas: la marca no usa formas redondas */
+      --alto: 58px;    /* altura de los botones */
+    }
+
+    /* Permite animar los colores de los botones con transición */
+    @property --placa { syntax: "<color>"; inherits: true; initial-value: transparent; }
+    @property --borde { syntax: "<color>"; inherits: true; initial-value: transparent; }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { color-scheme: dark; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: radial-gradient(ellipse 80% 50% at 50% 20%, #072227, transparent 70%), var(--fondo);
+      color: var(--blanco);
+      font-family: "Saira", system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .oculto {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    /* ---------- Fondo: líneas finas y franja inclinada, como en la presentación ---------- */
+
+    .fondo,
+    #esquirlas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .fondo { z-index: -2; }
+
+    .fondo line {
+      stroke: var(--amarillo);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+      animation: trazar 1.6s cubic-bezier(.6, 0, .2, 1) both;
+    }
+
+    .fondo .diagonal { stroke-opacity: 0.3; }
+    .fondo .borde-franja { stroke-width: 1.5; animation-delay: .2s; }
+    .fondo .diagonal:nth-of-type(2) { animation-delay: .45s; }
+
+    /* Un destello corto que recorre cada línea de vez en cuando */
+    .fondo .pulso {
+      stroke-opacity: 0.9;
+      stroke-width: 2;
+      stroke-dasharray: 80 4000;
+      animation: recorrer 9s linear 2s infinite;
+      opacity: 0;
+    }
+
+    .fondo .pulso + .pulso { animation-delay: 6.5s; }
+
+    /* Con el trazo sin escalar, los guiones se miden en píxeles de pantalla:
+       se pasa de "nada dibujado" a "línea completa" (ninguna línea mide más de 3000 px) */
+    @keyframes trazar { from { stroke-dasharray: 0 3000; } to { stroke-dasharray: 3000 0; } }
+
+    @keyframes recorrer {
+      0% { stroke-dashoffset: 80; opacity: 1; }
+      30% { stroke-dashoffset: -1800; opacity: 1; }
+      30.01%, 100% { opacity: 0; }
+    }
+
+    /* Capa WebGL con esquirlas triangulares (aparece cuando la animación ya arrancó) */
+    #esquirlas {
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+
+    .animado #esquirlas { opacity: 1; }
+
+    /* ---------- Contenido ---------- */
+
+    main {
+      width: 100%;
+      max-width: 540px;
+      margin: 0 auto;
+      /* Ocupa al menos toda la pantalla para que el pie quede siempre dentro de la franja inferior */
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: clamp(40px, 9vh, 88px) 16px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Logo armado por capas (sacadas del PSD de la marca) para poder animarlas por separado.
+       Las posiciones salen de las coordenadas originales: lienzo de 1753 x 626 px. */
+    .logo {
+      position: relative;
+      width: min(100%, 480px);
+      aspect-ratio: 1753 / 626;
+      margin: 0;
+    }
+
+    .logo > * {
+      position: absolute;
+      display: block;
+      height: auto;
+    }
+
+    .logo-triangulo { left: 16.66%; top: 0; width: 73.76%; height: 100%; animation: triangulo-entra 900ms cubic-bezier(.2, .7, .2, 1) both, flotar 8s ease-in-out 1s infinite alternate; }
+    .logo-we-are { left: 0; top: 4.47%; width: 43.93%; animation: desde-izquierda 600ms 300ms cubic-bezier(.2, .7, .2, 1) both; }
+    .logo-sharp { left: 7.02%; top: 27.64%; width: 92.98%; animation: corte 700ms 450ms cubic-bezier(.7, 0, .2, 1) both; }
+    .logo-sharp img { display: block; width: 100%; height: auto; }
+    .logo-interactive { left: 32.92%; top: 59.27%; width: 57.96%; animation: desde-derecha 600ms 750ms cubic-bezier(.2, .7, .2, 1) both; }
+
+    @keyframes triangulo-entra { from { opacity: 0; transform: rotate(-14deg) scale(.8); } }
+    @keyframes flotar { to { transform: translateY(-5px) rotate(1.2deg); } }
+    @keyframes desde-izquierda { from { opacity: 0; transform: translateX(-28px); } }
+    @keyframes desde-derecha { from { opacity: 0; transform: translateX(28px); } }
+
+    /* "SHARP" aparece con un corte diagonal, como un filo */
+    @keyframes corte {
+      from { clip-path: polygon(0 0, 0 0, -15% 100%, -15% 100%); }
+      to { clip-path: polygon(0 0, 115% 0, 100% 100%, -15% 100%); }
+    }
+
+    /* Destello amarillo que cruza "SHARP" cada pocos segundos (solo donde hay letra) */
+    @supports ((mask-image: url("")) or (-webkit-mask-image: url(""))) {
+      .logo-sharp::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(105deg, transparent 42%, rgba(252, 254, 96, .95) 50%, transparent 58%) no-repeat;
+        background-size: 250% 100%;
+        background-position: 150% 0;
+        -webkit-mask: url("assets/logo-sharp.webp") 0 0 / 100% 100%;
+        mask: url("assets/logo-sharp.webp") 0 0 / 100% 100%;
+        animation: destello 7s 2.2s ease-in-out infinite;
+      }
+    }
+
+    @keyframes destello {
+      0% { background-position: 150% 0; }
+      22%, 100% { background-position: -50% 0; }
+    }
+
+    /* Etiqueta en paralelogramo, como los porcentajes de la presentación */
+    .etiqueta {
+      margin: 14px 0 0;
+      padding: 5px 20px;
+      background: var(--amarillo);
+      color: var(--fondo);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    }
+
+    .lema {
+      margin: 16px 0 0;
+      max-width: 22em;
+      font-size: 1.05rem;
+      line-height: 1.45;
+      text-wrap: balance;
+    }
+
+    .lema small {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      color: var(--verde);
+    }
+
+    /* ---------- Botones ---------- */
+
+    .enlaces {
+      list-style: none;
+      margin: 32px 0 0;
+      padding: 0;
+      width: 100%;
+      display: grid;
+      gap: 14px;
+    }
+
+    /* Fila del PDF: botón principal + Descargar + Compartir */
+    .fila-pdf {
+      display: grid;
+      grid-template-columns: 1fr var(--alto) var(--alto);
+      gap: 8px;
+    }
+
+    .enlace {
+      /* Colores de la placa; cada variante solo cambia estas variables */
+      --placa: rgba(36, 47, 45, 0.72);
+      --borde: rgba(255, 255, 255, 0.2);
+      --texto: var(--blanco);
+
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--alto);
+      padding: 10px 56px;
+      color: var(--texto);
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 180ms ease, --placa 180ms ease, --borde 180ms ease, transform 180ms ease;
+    }
+
+    /* Placa: fondo con dos esquinas cortadas y borde fino (también en los cortes diagonales) */
+    .enlace::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      clip-path: polygon(var(--corte) 0, 100% 0, 100% calc(100% - var(--corte)), calc(100% - var(--corte)) 100%, 0 100%, 0 var(--corte));
+      background:
+        linear-gradient(to bottom right, transparent calc(50% - 1px), var(--borde) 50%, transparent calc(50% + 1px)) top left / var(--corte) var(--corte) no-repeat,
+        linear-gradient(to bottom right, transparent calc(50% - 1px), var(--borde) 50%, transparent calc(50% + 1px)) bottom right / var(--corte) var(--corte) no-repeat,
+        var(--placa);
+      box-shadow: inset 0 0 0 1px var(--borde);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Corchetes amarillos (como en el organigrama) en las dos esquinas rectas */
+    .enlace::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      pointer-events: none;
+      background:
+        linear-gradient(var(--amarillo) 0 0) top right / 14px 2px,
+        linear-gradient(var(--amarillo) 0 0) top right / 2px 14px,
+        linear-gradient(var(--amarillo) 0 0) bottom left / 14px 2px,
+        linear-gradient(var(--amarillo) 0 0) bottom left / 2px 14px;
+      background-repeat: no-repeat;
+      opacity: 0;
+      transform: scale(1.04);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .enlace svg {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      transform: translateY(-50%);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linejoin: miter;
+      stroke-linecap: square;
+    }
+
+    .enlace svg.relleno { fill: currentColor; stroke: none; }
+
+    /* Botón principal: la pre-inscripción, en amarillo */
+    .principal {
+      --placa: var(--amarillo);
+      --borde: var(--amarillo);
+      --texto: var(--fondo);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    /* En la fila del PDF el botón principal es más angosto: menos relleno a la derecha */
+    .fila-pdf .enlace:first-child { padding: 10px 16px 10px 52px; }
+
+    /* Botones cuadrados solo con ícono */
+    .cuadrado { padding: 0; }
+    .cuadrado svg { left: 50%; transform: translate(-50%, -50%); }
+
+    /* Solo con cursor: en pantallas táctiles el hover se queda pegado tras tocar */
+    @media (hover: hover) {
+      .enlace:hover {
+        --borde: var(--verde);
+        --texto: var(--verde);
+        transform: translateY(-1px);
+      }
+
+      .principal:hover {
+        --placa: var(--verde);
+        --texto: var(--fondo);
+      }
+
+      .enlace:hover::after { opacity: 1; transform: none; }
+    }
+
+    .enlace:active { transform: scale(0.985); }
+
+    /* Foco de teclado: solo el contorno, para no confundirse con el hover */
+    .enlace:focus-visible {
+      outline: 2px solid var(--amarillo);
+      outline-offset: 4px;
+    }
+
+    /* Enlace todavía sin dirección: se ve apagado y dice "Próximamente".
+       Para activarlo basta con cambiar href="#pendiente" por la dirección real. */
+    .pronto { display: none; }
+
+    .enlace[href="#pendiente"] {
+      cursor: default;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .enlace[href="#pendiente"] .pronto {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    /* Pegado al fondo de la página: al llegar abajo queda sobre la franja verde,
+       lejos de la línea amarilla y con buen contraste */
+    footer {
+      margin-top: auto;
+      padding: 56px 0 max(22px, env(safe-area-inset-bottom));
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    /* Aviso flotante ("Enlace copiado") */
+    .aviso {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      margin: 0;
+      padding: 8px 24px;
+      background: var(--amarillo);
+      color: var(--fondo);
+      font-weight: 700;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+
+    .aviso.visible { opacity: 1; transform: translate(-50%, 0); }
+
+    /* Entrada escalonada del contenido bajo el logo */
+    .aparece { animation: subir 600ms calc(900ms + var(--i, 0) * 90ms) cubic-bezier(.2, .7, .2, 1) both; }
+
+    @keyframes subir { from { opacity: 0; transform: translateY(10px); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Fondo vectorial: nítido a cualquier resolución -->
+  <svg class="fondo" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="degradado-franja" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#253e2d"/>
+        <stop offset="1" stop-color="#242f2d"/>
+      </linearGradient>
+    </defs>
+    <polygon points="0,90 100,84 100,100 0,100" fill="url(#degradado-franja)"/>
+    <line class="diagonal" x1="51" y1="0" x2="85" y2="84.9"/>
+    <line class="diagonal" x1="97" y1="0" x2="20" y2="88.8"/>
+    <line class="borde-franja" x1="0" y1="90" x2="100" y2="84"/>
+    <line class="pulso" x1="51" y1="0" x2="85" y2="84.9"/>
+    <line class="pulso" x1="97" y1="0" x2="20" y2="88.8"/>
+  </svg>
+  <canvas id="esquirlas" aria-hidden="true"></canvas>
+
+  <main>
+    <h1 class="logo">
+      <span class="oculto">Sharp Interactive</span>
+      <svg class="logo-triangulo" viewBox="0 0 1293 626" preserveAspectRatio="none" aria-hidden="true">
+        <polygon points="0,0 1293,105 394,626" fill="#253e2d"/>
+        <polygon points="11,18 1265,121 394,626" fill="#242f2d"/>
+      </svg>
+      <img class="logo-we-are" src="assets/logo-we-are.webp" width="770" height="68" alt="">
+      <span class="logo-sharp"><img src="assets/logo-sharp.webp" width="1630" height="171" alt=""></span>
+      <img class="logo-interactive" src="assets/logo-interactive.webp" width="1016" height="50" alt="">
+    </h1>
+
+    <p class="etiqueta aparece" style="--i: 0">Pre-inscripciones abiertas</p>
+    <p class="lema aparece" style="--i: 1">
+      Creamos videojuegos y productos audiovisuales. Entre amigos, pero en serio.
+      <small>Semillero IDED · UPB</small>
+    </p>
+
+    <!-- Enlaces: para cambiar uno, edita solo el href -->
+    <ul class="enlaces">
+      <li class="aparece" style="--i: 2">
+        <a class="enlace principal" href="https://forms.cloud.microsoft/r/nUFSm0i9y6" target="_blank" rel="noopener noreferrer" aria-describedby="nueva-pestana">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H5v17h14V4h-3M8 2h8v4H8zM8.5 13.5l2.5 2.5 5-5"/></svg>
+          Pre-inscríbete
+        </a>
+      </li>
+      <li class="fila-pdf aparece" style="--i: 3">
+        <a class="enlace" href="assets/sharp-interactive-estudiantes.pdf" target="_blank" rel="noopener" aria-describedby="nueva-pestana">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h9l5 5v15H5zM14 2v5h5M8.5 12h7M8.5 16h5"/></svg>
+          Conoce Sharp
+        </a>
+        <a class="enlace cuadrado" href="assets/sharp-interactive-estudiantes.pdf" download="Sharp-Interactive-Estudiantes.pdf" aria-label="Descargar PDF" title="Descargar PDF">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M6.5 9.5 12 15l5.5-5.5M4 17v4h16v-4"/></svg>
+        </a>
+        <button class="enlace cuadrado" type="button" id="compartir" aria-label="Compartir PDF" title="Compartir PDF">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M8 11H5v10h14V11h-3"/></svg>
+        </button>
+      </li>
+      <li class="aparece" style="--i: 4">
+        <a class="enlace" href="https://www.instagram.com/sharp.interactive/" target="_blank" rel="noopener noreferrer" aria-describedby="nueva-pestana">
+          <svg class="relleno" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.990 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.990 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg>
+          Instagram
+        </a>
+      </li>
+    </ul>
+    <span id="nueva-pestana" hidden>Se abre en una pestaña nueva</span>
+
+    <footer class="aparece" style="--i: 5">Universidad Pontificia Bolivariana</footer>
+  </main>
+
+  <p class="aviso" role="status" aria-live="polite"></p>
+
+  <script>
+    // Enlaces pendientes: que el teclado y los lectores de pantalla tampoco los activen
+    for (const enlace of document.querySelectorAll('a[href="#pendiente"]')) {
+      enlace.setAttribute("aria-disabled", "true");
+      enlace.tabIndex = -1;
+      enlace.addEventListener("click", (e) => e.preventDefault());
+    }
+
+    // Compartir el PDF: menú nativo del celular; en computador, copia el enlace
+    (() => {
+      const boton = document.getElementById("compartir");
+      const aviso = document.querySelector(".aviso");
+      const url = new URL("assets/sharp-interactive-estudiantes.pdf", location.href).href;
+      let temporizador;
+
+      const avisar = (texto) => {
+        aviso.textContent = texto;
+        aviso.classList.add("visible");
+        clearTimeout(temporizador);
+        temporizador = setTimeout(() => aviso.classList.remove("visible"), 2200);
+      };
+
+      const copiar = async (texto) => {
+        try {
+          await navigator.clipboard.writeText(texto);
+          return true;
+        } catch {
+          // Navegadores sin portapapeles moderno (o sin permiso)
+          const campo = Object.assign(document.createElement("textarea"), { value: texto });
+          campo.style.cssText = "position:fixed;opacity:0";
+          document.body.append(campo);
+          campo.select();
+          const ok = document.execCommand("copy");
+          campo.remove();
+          return ok;
+        }
+      };
+
+      boton.addEventListener("click", async () => {
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: "Sharp Interactive", text: "Conoce Sharp Interactive, el semillero de IDED:", url });
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") return; // la persona cerró el menú
+          }
+        }
+        if (await copiar(url)) avisar("Enlace copiado");
+        else window.open(url, "_blank"); // último recurso: abrir el PDF para compartirlo desde el visor
+      });
+    })();
+
+    // Esquirlas triangulares dibujadas con WebGL: nítidas a cualquier resolución.
+    // Sin WebGL o con movimiento reducido se queda solo el fondo de líneas.
+    (() => {
+      const canvas = document.getElementById("esquirlas");
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const gl = canvas.getContext("webgl", { antialias: true, premultipliedAlpha: true });
+      if (!gl) return;
+
+      const vertex = `
+        attribute vec3 a;   // x: vértice (0, 1 o 2), y: semilla, z: profundidad (0 lejos, 1 cerca)
+        uniform float t;
+        uniform vec2 ext;   // semiejes de la pantalla en unidades del lado corto
+        varying vec4 vColor;
+
+        float azar(float n) { return fract(sin(n) * 43758.5453); }
+
+        void main() {
+          float s = a.y, z = a.z;
+
+          // La forma del triángulo del logo: ancho arriba y con la punta abajo
+          vec2 v = a.x < 0.5 ? vec2(-1.0, 0.45) : a.x < 1.5 ? vec2(1.0, 0.3) : vec2(-0.4, -0.9);
+          float giro = azar(s * 3.1) * 6.2832 + t * (azar(s * 5.7) - 0.5) * 0.5;
+          float c = cos(giro), sn = sin(giro);
+          v = mat2(c, sn, -sn, c) * v * mix(0.012, 0.05, z) * (0.6 + 0.8 * azar(s * 7.3));
+
+          // Suben en diagonal y reaparecen por el otro lado; las cercanas van más rápido
+          vec2 inicio = vec2(azar(s * 11.1), azar(s * 13.7));
+          vec2 pos = fract(inicio + vec2(0.006, 0.012) * (0.4 + z) * t);
+          vec2 p = (pos * 2.2 - 1.1) * ext + v;
+          gl_Position = vec4(p / ext, 0.0, 1.0);
+
+          // Mitad verdes, un cuarto amarillas y el resto sólidas en verde oscuro
+          float tono = azar(s * 17.9);
+          vec3 color = tono < 0.5 ? vec3(0.475, 0.816, 0.337)
+                     : tono < 0.75 ? vec3(0.988, 0.996, 0.376)
+                     : vec3(0.145, 0.243, 0.176);
+          float alfa = (tono < 0.75 ? 0.1 + 0.4 * z : 0.9) * (0.75 + 0.25 * sin(1.3 * t + s * 40.0));
+          vColor = vec4(color * alfa, alfa);
+        }`;
+
+      const fragment = `
+        precision mediump float;
+        varying vec4 vColor;
+        void main() { gl_FragColor = vColor; }`;
+
+      const compilar = (tipo, fuente) => {
+        const sh = gl.createShader(tipo);
+        gl.shaderSource(sh, fuente);
+        gl.compileShader(sh);
+        return sh;
+      };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compilar(gl.VERTEX_SHADER, vertex));
+      gl.attachShader(prog, compilar(gl.FRAGMENT_SHADER, fragment));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+      gl.useProgram(prog);
+
+      // Tres vértices por esquirla, todos con la misma semilla y profundidad
+      const CANTIDAD = innerWidth < 640 ? 70 : 140;
+      const datos = [];
+      for (let i = 0; i < CANTIDAD; i++) {
+        const semilla = Math.random() * 100;
+        const profundidad = Math.random() ** 1.6; // más esquirlas lejanas que cercanas
+        for (let k = 0; k < 3; k++) datos.push(k, semilla, profundidad);
+      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(datos), gl.STATIC_DRAW);
+      const aLoc = gl.getAttribLocation(prog, "a");
+      gl.enableVertexAttribArray(aLoc);
+      gl.vertexAttribPointer(aLoc, 3, gl.FLOAT, false, 0, 0);
+
+      const uT = gl.getUniformLocation(prog, "t");
+      const uExt = gl.getUniformLocation(prog, "ext");
+
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.clearColor(0, 0, 0, 0);
+
+      const ajustar = () => {
+        const dpr = Math.min(devicePixelRatio || 1, 2);
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        const corto = Math.min(w, h);
+        gl.uniform2f(uExt, w / corto, h / corto);
+      };
+      addEventListener("resize", ajustar);
+      ajustar();
+
+      const inicio = performance.now();
+      let primero = true;
+      const cuadro = (ahora) => {
+        gl.uniform1f(uT, (ahora - inicio) / 1000);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, CANTIDAD * 3);
+        if (primero) {
+          primero = false;
+          document.documentElement.classList.add("animado");
+        }
+        requestAnimationFrame(cuadro);
+      };
+      requestAnimationFrame(cuadro);
+    })();
+  </script>
+</body>
+</html>
